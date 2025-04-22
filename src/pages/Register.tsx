@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -30,7 +29,12 @@ const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(50),
   email: z.string()
     .email('Invalid email address')
-    .endsWith('@srmuniversity.edu.in', 'Must be an SRM University email'),
+    .refine(
+      (email) => 
+        email.endsWith('@srmist.edu.in') || 
+        email.endsWith('@srmuniversity.edu.in'), 
+      'Must be an SRM University email (srmist.edu.in or srmuniversity.edu.in)'
+    ),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
