@@ -23,6 +23,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { registerFormSchema, type RegisterFormValues } from '@/schemas/register-schema';
 import { PasswordInput } from './password-input';
+import { mockUsers } from '@/lib/mockData';
+import { v4 as uuidv4 } from 'uuid';
 
 export function RegisterForm() {
   const navigate = useNavigate();
@@ -42,8 +44,40 @@ export function RegisterForm() {
 
   const onSubmit = async (values: RegisterFormValues) => {
     try {
-      // In a real app, we would make an API call to register the user
-      console.log('Registration values:', values);
+      // Create a new user object from form values
+      const newUser = {
+        id: uuidv4(),
+        name: values.name,
+        email: values.email,
+        role: 'student' as const,
+        department: values.department,
+        year: parseInt(values.year) || 1,
+        // Store the password in localStorage for the mock authentication
+        password: values.password
+      };
+      
+      // Add the new user to mockUsers array
+      mockUsers.push({
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        department: newUser.department,
+        year: newUser.year
+      });
+      
+      // Store user login info in localStorage for the mock authentication
+      const storedUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+      storedUsers.push({
+        email: values.email,
+        password: values.password,
+        name: values.name,
+        role: 'student'
+      });
+      localStorage.setItem('registeredUsers', JSON.stringify(storedUsers));
+      
+      console.log('Registration successful', newUser);
+      console.log('Current mockUsers:', mockUsers);
       
       toast({
         title: 'Registration successful',
@@ -55,6 +89,7 @@ export function RegisterForm() {
         navigate('/login');
       }, 1500);
     } catch (error) {
+      console.error('Registration error:', error);
       toast({
         title: 'Registration failed',
         description: 'An error occurred during registration. Please try again.',
@@ -186,4 +221,3 @@ export function RegisterForm() {
     </Form>
   );
 }
-

@@ -8,6 +8,7 @@ export interface User {
   role: UserRole;
   department?: string;
   year?: number;
+  password?: string; // Optional for mock data
 }
 
 export interface Complaint {

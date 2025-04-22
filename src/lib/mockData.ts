@@ -71,7 +71,44 @@ export const mockSOSAlerts: SOSAlert[] = [
 
 // Mock authentication function
 export const mockLogin = (email: string, password: string): User | null => {
+  // Check predefined mock users first
   const user = mockUsers.find(u => u.email === email);
-  // In a real app, we would check password hash
-  return user || null;
+  
+  // If user exists in mock data and there's no password provided, return the user
+  // This is just for testing purposes
+  if (user && !password) return user;
+  
+  // Check local storage for registered users
+  try {
+    const storedUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+    const registeredUser = storedUsers.find((u: any) => 
+      u.email === email && u.password === password
+    );
+    
+    if (registeredUser) {
+      // Find if the user already exists in mockUsers array
+      const existingUser = mockUsers.find(u => u.email === email);
+      
+      if (existingUser) {
+        return existingUser;
+      } else {
+        // Create a new user entry and add to mockUsers
+        const newUser: User = {
+          id: `user-${mockUsers.length + 1}`,
+          name: registeredUser.name,
+          email: registeredUser.email,
+          role: registeredUser.role || 'student',
+          department: registeredUser.department || 'General',
+          year: registeredUser.year || 1
+        };
+        
+        mockUsers.push(newUser);
+        return newUser;
+      }
+    }
+  } catch (error) {
+    console.error('Error checking local storage for users:', error);
+  }
+  
+  return null;
 };
