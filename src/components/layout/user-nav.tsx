@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserNavProps {
   user: {
@@ -22,9 +23,18 @@ interface UserNavProps {
 
 export function UserNav({ user }: UserNavProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const handleLogout = () => {
-    // In a real app, we would clear auth tokens/state
+    // Clear the current user from localStorage
+    localStorage.removeItem('currentUserEmail');
+    
+    toast({
+      title: 'Logged out',
+      description: 'You have been successfully logged out.',
+    });
+    
+    // Redirect to login page
     setTimeout(() => {
       navigate('/login');
     }, 500);
@@ -69,9 +79,14 @@ export function UserNav({ user }: UserNavProps) {
           <Link to="/profile">Profile Settings</Link>
         </DropdownMenuItem>
         {user.role === 'student' && (
-          <DropdownMenuItem asChild>
-            <Link to="/submit-complaint">Submit a Complaint</Link>
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem asChild>
+              <Link to="/submit-complaint">Submit a Complaint</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/my-complaints">My Complaints</Link>
+            </DropdownMenuItem>
+          </>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="text-red-500">

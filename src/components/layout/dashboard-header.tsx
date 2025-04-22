@@ -4,6 +4,8 @@ import { UserNav } from "./user-nav";
 import { SOSButton } from "../ui/sos-button";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@/types";
+import { saveSosAlert } from "@/lib/mockData";
+import { v4 as uuidv4 } from 'uuid';
 
 interface DashboardHeaderProps {
   user: User;
@@ -20,8 +22,21 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          // In a real app, we would send this location to the API
-          console.log("Location shared:", position.coords);
+          // Create an SOS alert with the user's location
+          const alert = {
+            id: uuidv4(),
+            userId: user.id,
+            timestamp: new Date().toISOString(),
+            location: {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              address: 'Retrieving location address...'
+            },
+            status: 'active' as const
+          };
+          
+          // Save the SOS alert
+          saveSosAlert(alert);
           
           toast({
             title: "SOS Alert Activated",
@@ -80,10 +95,10 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
                   My Complaints
                 </Link>
                 <Link 
-                  to="/resources" 
+                  to="/profile" 
                   className="text-sm font-medium transition-colors hover:text-shehelp-purple"
                 >
-                  Resources
+                  Profile
                 </Link>
               </>
             )}

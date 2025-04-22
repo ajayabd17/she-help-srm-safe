@@ -44,6 +44,27 @@ export function RegisterForm() {
 
   const onSubmit = async (values: RegisterFormValues) => {
     try {
+      // Verify email is from SRM University
+      if (!values.email.endsWith('@srmist.edu.in') && !values.email.endsWith('@srmuniversity.edu.in')) {
+        toast({
+          title: 'Registration failed',
+          description: 'Please use your SRM University email address.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Check if email already exists
+      const existingUser = mockUsers.find(u => u.email === values.email);
+      if (existingUser) {
+        toast({
+          title: 'Registration failed',
+          description: 'An account with this email already exists.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
       // Create a new user object from form values
       const newUser = {
         id: uuidv4(),
@@ -52,8 +73,8 @@ export function RegisterForm() {
         role: 'student' as const,
         department: values.department,
         year: parseInt(values.year) || 1,
-        // Store the password in localStorage for the mock authentication
-        password: values.password
+        password: values.password,
+        isProfileComplete: false
       };
       
       // Add the new user to mockUsers array
@@ -63,30 +84,35 @@ export function RegisterForm() {
         email: newUser.email,
         role: newUser.role,
         department: newUser.department,
-        year: newUser.year
+        year: newUser.year,
+        isProfileComplete: false
       });
       
       // Store user login info in localStorage for the mock authentication
       const storedUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
       storedUsers.push({
+        id: newUser.id,
         email: values.email,
         password: values.password,
         name: values.name,
-        role: 'student'
+        role: 'student',
+        isProfileComplete: false
       });
       localStorage.setItem('registeredUsers', JSON.stringify(storedUsers));
       
       console.log('Registration successful', newUser);
-      console.log('Current mockUsers:', mockUsers);
       
       toast({
         title: 'Registration successful',
-        description: 'Your account has been created. You can now log in.',
+        description: 'Your account has been created. Please complete your profile to continue.',
       });
       
-      // Redirect to login page
+      // Set current user email in localStorage
+      localStorage.setItem('currentUserEmail', values.email);
+      
+      // Redirect to profile completion page
       setTimeout(() => {
-        navigate('/login');
+        navigate('/profile');
       }, 1500);
     } catch (error) {
       console.error('Registration error:', error);

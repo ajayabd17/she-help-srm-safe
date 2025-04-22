@@ -5,23 +5,56 @@ import { SOSButton } from '@/components/ui/sos-button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComplaintCard } from '@/components/dashboard/complaint-card';
 import { Button } from '@/components/ui/button';
-import { mockUsers, mockComplaints } from '@/lib/mockData';
+import { mockUsers, getUserComplaints } from '@/lib/mockData';
 import { useNavigate } from 'react-router-dom';
 import { Bell, User, MessageSquare } from 'lucide-react';
+import { Complaint } from '@/types';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [currentUser, setCurrentUser] = useState(mockUsers[0]); // Default to first user
-  const [userComplaints, setUserComplaints] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userComplaints, setUserComplaints] = useState<Complaint[]>([]);
   
   useEffect(() => {
-    // In a real app, this would come from an authenticated session
-    // For demo purposes, we're using the first mock user (student)
+    // Check if user is logged in
+    const checkLoggedInUser = () => {
+      try {
+        const userEmail = localStorage.getItem('currentUserEmail');
+        if (!userEmail) {
+          navigate('/login');
+          return;
+        }
+        
+        const user = mockUsers.find(u => u.email === userEmail);
+        if (user) {
+          setCurrentUser(user);
+          
+          // If profile is not complete and user is a student, redirect to profile page
+          if (user.role === 'student' && !user.isProfileComplete) {
+            navigate('/profile');
+            return;
+          }
+          
+          // Get user complaints
+          if (user.role === 'student') {
+            const complaints = getUserComplaints(user.id);
+            setUserComplaints(complaints);
+          }
+        } else {
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Error checking logged in user:', error);
+        navigate('/login');
+      }
+    };
     
-    // Filter complaints for current user
-    const complaints = mockComplaints.filter(complaint => complaint.userId === currentUser.id);
-    setUserComplaints(complaints);
-  }, [currentUser]);
+    checkLoggedInUser();
+  }, [navigate]);
+
+  if (!currentUser) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -66,6 +99,12 @@ const Dashboard = () => {
                   <span className="text-sm font-medium">Year:</span>
                   <span className="text-sm">{currentUser.year}</span>
                 </div>
+                {currentUser.registerNumber && (
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Register No:</span>
+                    <span className="text-sm">{currentUser.registerNumber}</span>
+                  </div>
+                )}
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -126,7 +165,7 @@ const Dashboard = () => {
               
               {userComplaints.length > 0 ? (
                 <div className="space-y-4">
-                  {userComplaints.map(complaint => (
+                  {userComplaints.slice(0, 3).map(complaint => (
                     <ComplaintCard 
                       key={complaint.id} 
                       complaint={complaint} 
@@ -182,8 +221,21 @@ const Dashboard = () => {
                 <div className="flex justify-center">
                   <SOSButton 
                     onActivate={() => {
-                      // In a real app, this would trigger an SOS alert with location
-                      console.log("SOS activated from dashboard");
+                      // Implement SOS activation with Google Maps
+                      if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                          (position) => {
+                            const { latitude, longitude } = position.coords;
+                            console.log("Location:", { latitude, longitude });
+                            
+                            // In a real app, this would send the alert to campus security
+                            // and show location on Google Maps
+                          },
+                          (error) => {
+                            console.error("Error getting location:", error);
+                          }
+                        );
+                      }
                     }} 
                     size="large"
                   />

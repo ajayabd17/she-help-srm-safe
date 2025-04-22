@@ -51,16 +51,24 @@ export function LoginForm() {
       const user = mockLogin(values.email, values.password);
       
       if (user) {
+        // Store current user email in localStorage
+        localStorage.setItem('currentUserEmail', values.email);
+        
         toast({
           title: 'Login successful',
           description: `Welcome back, ${user.name}!`,
         });
         
-        // Navigate based on role
-        if (user.role === 'admin') {
-          navigate('/admin/dashboard');
+        // If profile is not complete and user is a student, redirect to profile page
+        if (user.role === 'student' && !user.isProfileComplete) {
+          navigate('/profile');
         } else {
-          navigate('/dashboard');
+          // Navigate based on role
+          if (user.role === 'admin') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/dashboard');
+          }
         }
       } else {
         toast({

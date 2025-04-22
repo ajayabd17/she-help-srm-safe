@@ -1,82 +1,32 @@
 
 import { User, Complaint, SOSAlert } from '@/types';
 
-// Mock users
+// Mock users (only admins)
 export const mockUsers: User[] = [
   {
-    id: 'user1',
-    name: 'Jane Doe',
-    email: 'jane.doe@srmuniversity.edu.in',
-    role: 'student',
-    department: 'Computer Science',
-    year: 3
-  },
-  {
-    id: 'user2',
-    name: 'Sarah Smith',
-    email: 'sarah.smith@srmuniversity.edu.in',
-    role: 'student',
-    department: 'Electronics',
-    year: 2
-  },
-  {
     id: 'admin1',
-    name: 'Dr. Amanda Williams',
-    email: 'amanda.williams@srmuniversity.edu.in',
+    name: 'Head of Directorate of Student Affairs',
+    email: 'hod.studentaffairs@srmuniversity.edu.in',
     role: 'admin',
-    department: 'Student Affairs'
+    department: 'Student Affairs',
+    password: 'admin123' // For demo purposes only
   }
 ];
 
-// Mock complaints
-export const mockComplaints: Complaint[] = [
-  {
-    id: 'complaint1',
-    userId: 'user1',
-    title: 'Uncomfortable Behavior',
-    description: 'Someone has been following me after evening classes.',
-    location: 'Engineering Block',
-    timestamp: '2023-11-15T14:30:00Z',
-    status: 'in-progress',
-    category: 'stalking',
-    anonymous: true
-  },
-  {
-    id: 'complaint2',
-    userId: 'user2',
-    title: 'Verbal Harassment',
-    description: 'I faced repeated verbal harassment during lab sessions.',
-    location: 'Science Lab',
-    timestamp: '2023-11-10T10:15:00Z',
-    status: 'pending',
-    category: 'harassment',
-    anonymous: false
-  }
-];
+// Empty complaints array - will be populated by user submissions
+export const mockComplaints: Complaint[] = [];
 
-// Mock SOS alerts
-export const mockSOSAlerts: SOSAlert[] = [
-  {
-    id: 'sos1',
-    userId: 'user1',
-    timestamp: '2023-11-16T18:45:00Z',
-    location: {
-      latitude: 12.823084,
-      longitude: 80.044794,
-      address: 'Near SRM University Main Gate'
-    },
-    status: 'resolved'
-  }
-];
+// Empty SOS alerts array - will be populated as alerts are triggered
+export const mockSOSAlerts: SOSAlert[] = [];
 
 // Mock authentication function
 export const mockLogin = (email: string, password: string): User | null => {
   // Check predefined mock users first
   const user = mockUsers.find(u => u.email === email);
   
-  // If user exists in mock data and there's no password provided, return the user
+  // If user exists in mock data and password matches, return the user
   // This is just for testing purposes
-  if (user && !password) return user;
+  if (user && user.password === password) return user;
   
   // Check local storage for registered users
   try {
@@ -99,7 +49,9 @@ export const mockLogin = (email: string, password: string): User | null => {
           email: registeredUser.email,
           role: registeredUser.role || 'student',
           department: registeredUser.department || 'General',
-          year: registeredUser.year || 1
+          year: registeredUser.year || 1,
+          registerNumber: registeredUser.registerNumber,
+          isProfileComplete: registeredUser.isProfileComplete || false
         };
         
         mockUsers.push(newUser);
@@ -111,4 +63,86 @@ export const mockLogin = (email: string, password: string): User | null => {
   }
   
   return null;
+};
+
+// Function to save complaint to localStorage
+export const saveComplaint = (complaint: Complaint): void => {
+  try {
+    // Get existing complaints
+    const existingComplaints = JSON.parse(localStorage.getItem('complaints') || '[]');
+    
+    // Add new complaint
+    existingComplaints.push(complaint);
+    
+    // Save back to localStorage
+    localStorage.setItem('complaints', JSON.stringify(existingComplaints));
+    
+    // Also add to mock complaints for current session
+    mockComplaints.push(complaint);
+  } catch (error) {
+    console.error('Error saving complaint:', error);
+  }
+};
+
+// Function to get user complaints
+export const getUserComplaints = (userId: string): Complaint[] => {
+  try {
+    // Get complaints from localStorage
+    const complaints = JSON.parse(localStorage.getItem('complaints') || '[]');
+    
+    // Filter for user's complaints
+    return complaints.filter((complaint: Complaint) => complaint.userId === userId);
+  } catch (error) {
+    console.error('Error getting user complaints:', error);
+    return [];
+  }
+};
+
+// Function to save SOS alert
+export const saveSosAlert = (alert: SOSAlert): void => {
+  try {
+    // Get existing alerts
+    const existingAlerts = JSON.parse(localStorage.getItem('sosAlerts') || '[]');
+    
+    // Add new alert
+    existingAlerts.push(alert);
+    
+    // Save back to localStorage
+    localStorage.setItem('sosAlerts', JSON.stringify(existingAlerts));
+    
+    // Also add to mock alerts for current session
+    mockSOSAlerts.push(alert);
+  } catch (error) {
+    console.error('Error saving SOS alert:', error);
+  }
+};
+
+// Function to update user profile
+export const updateUserProfile = (userId: string, profileData: Partial<User>): User | null => {
+  try {
+    // Update in mockUsers array
+    const userIndex = mockUsers.findIndex(u => u.id === userId);
+    if (userIndex >= 0) {
+      mockUsers[userIndex] = { ...mockUsers[userIndex], ...profileData, isProfileComplete: true };
+      
+      // Update in localStorage
+      const storedUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+      const storedUserIndex = storedUsers.findIndex((u: any) => u.email === mockUsers[userIndex].email);
+      
+      if (storedUserIndex >= 0) {
+        storedUsers[storedUserIndex] = { 
+          ...storedUsers[storedUserIndex], 
+          ...profileData, 
+          isProfileComplete: true 
+        };
+        localStorage.setItem('registeredUsers', JSON.stringify(storedUsers));
+      }
+      
+      return mockUsers[userIndex];
+    }
+    return null;
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    return null;
+  }
 };

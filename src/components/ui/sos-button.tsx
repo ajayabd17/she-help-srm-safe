@@ -3,6 +3,8 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { AlertCircle } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+import { saveSosAlert } from '@/lib/mockData';
 
 interface SOSButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   onActivate: () => void;
@@ -32,12 +34,93 @@ const SOSButton = React.forwardRef<HTMLButtonElement, SOSButtonProps>(
     };
     
     const handleActivate = () => {
-      onActivate();
-      toast({
-        title: "SOS Alert Activated",
-        description: "Emergency contacts and campus security have been notified.",
-        variant: "destructive"
-      });
+      // Request permission and get user's location
+      if (navigator.geolocation) {
+        toast({
+          title: "Requesting Location",
+          description: "Please allow access to your location for emergency services.",
+        });
+        
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            
+            // Create a Google Maps URL with the coordinates
+            const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+            
+            // Get address from coordinates (reverse geocoding)
+            // This is a simplified version - in a real app, you'd use the Google Maps Geocoding API
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+              .then(response => response.json())
+              .then(data => {
+                const address = data.display_name || 'Unknown location';
+                
+                // Create and save the SOS alert
+                const userEmail = localStorage.getItem('currentUserEmail');
+                if (userEmail) {
+                  const userId = localStorage.getItem('currentUserId') || 'unknown';
+                  
+                  const alert = {
+                    id: uuidv4(),
+                    userId,
+                    timestamp: new Date().toISOString(),
+                    location: {
+                      latitude,
+                      longitude,
+                      address
+                    },
+                    status: 'active' as const
+                  };
+                  
+                  // Save the alert
+                  saveSosAlert(alert);
+                  
+                  // Call the onActivate callback
+                  onActivate();
+                  
+                  toast({
+                    title: "SOS Alert Activated",
+                    description: `Emergency contacts and campus security have been notified of your location: ${address}`,
+                    variant: "destructive"
+                  });
+                }
+              })
+              .catch(error => {
+                console.error("Error getting address:", error);
+                
+                // Still send the alert even if we can't get the address
+                onActivate();
+                
+                toast({
+                  title: "SOS Alert Activated",
+                  description: "Emergency contacts and campus security have been notified of your location.",
+                  variant: "destructive"
+                });
+              });
+          },
+          (error) => {
+            console.error("Error getting location:", error);
+            
+            // Still send the alert even if we can't get the location
+            onActivate();
+            
+            toast({
+              title: "SOS Alert Activated",
+              description: "Emergency contacts and campus security have been notified, but we couldn't access your location.",
+              variant: "destructive"
+            });
+          }
+        );
+      } else {
+        // Geolocation not supported
+        onActivate();
+        
+        toast({
+          title: "SOS Alert Activated",
+          description: "Emergency contacts and campus security have been notified, but location sharing is not supported on your device.",
+          variant: "destructive"
+        });
+      }
     };
     
     const sizeClasses = {
