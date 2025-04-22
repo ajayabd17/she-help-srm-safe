@@ -52,6 +52,27 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				// Custom colors for She Help
+				shehelp: {
+					purple: {
+						light: '#E5DEFF',
+						DEFAULT: '#8A4FFF',
+						dark: '#6B3ACC'
+					},
+					pink: {
+						light: '#FFDEE2',
+						DEFAULT: '#FF5A87',
+						dark: '#E63E68'
+					},
+					teal: {
+						light: '#D5F5F2',
+						DEFAULT: '#4ECDC4',
+						dark: '#36ABA3'
+					},
+					warning: '#FFA500',
+					danger: '#FF3B30',
+					safe: '#34C759'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

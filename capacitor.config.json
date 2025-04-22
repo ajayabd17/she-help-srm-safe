@@ -1,0 +1,16 @@
+
+{
+  "appId": "app.lovable.55947bf6adcb4dd3989b42e6fd44a15b",
+  "appName": "she-help-srm-safe",
+  "webDir": "dist",
+  "server": {
+    "url": "https://55947bf6-adcb-4dd3-989b-42e6fd44a15b.lovableproject.com?forceHideBadge=true",
+    "cleartext": true
+  },
+  "ios": {
+    "contentInset": "always"
+  },
+  "android": {
+    "useLegacyBridge": true
+  }
+}
