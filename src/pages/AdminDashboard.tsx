@@ -9,22 +9,68 @@ import { mockUsers, mockComplaints, mockSOSAlerts } from '@/lib/mockData';
 import { useNavigate } from 'react-router-dom';
 import { Users, Bell, MessageSquare, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { User, SOSAlert } from '@/types';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [currentUser, setCurrentUser] = useState(mockUsers.find(user => user.role === 'admin'));
-  const [activeAlerts, setActiveAlerts] = useState([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [activeAlerts, setActiveAlerts] = useState<SOSAlert[]>([]);
+  const [campusSafetyStatus, setCampusSafetyStatus] = useState('normal');
   
   useEffect(() => {
-    // In a real app, we would fetch this data from an API
-    setActiveAlerts(mockSOSAlerts.filter(alert => alert.status === 'active'));
-  }, []);
+    // Check if user is logged in and is admin
+    const checkAdmin = () => {
+      const userEmail = localStorage.getItem('currentUserEmail');
+      if (!userEmail) {
+        navigate('/login');
+        return;
+      }
+      
+      const user = mockUsers.find(u => u.email === userEmail);
+      if (user && user.role === 'admin') {
+        setCurrentUser(user);
+        
+        // Get active SOS alerts
+        try {
+          const storedAlerts = JSON.parse(localStorage.getItem('sosAlerts') || '[]');
+          const allAlerts = [...mockSOSAlerts, ...storedAlerts];
+          setActiveAlerts(allAlerts.filter(alert => alert.status === 'active'));
+        } catch (error) {
+          console.error("Error loading SOS alerts:", error);
+          setActiveAlerts(mockSOSAlerts.filter(alert => alert.status === 'active'));
+        }
+        
+        // Get campus safety status
+        const savedStatus = localStorage.getItem('campusSafetyStatus');
+        if (savedStatus) {
+          setCampusSafetyStatus(savedStatus);
+        }
+      } else {
+        navigate('/login');
+      }
+    };
+    
+    checkAdmin();
+  }, [navigate]);
 
   // Get the name of a complaint submitter
   const getUserName = (userId: string) => {
     const user = mockUsers.find(u => u.id === userId);
     return user ? user.name : 'Unknown User';
   };
+  
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'normal': return 'bg-green-500';
+      case 'caution': return 'bg-yellow-500';
+      case 'alert': return 'bg-red-500';
+      default: return 'bg-green-500';
+    }
+  };
+
+  if (!currentUser) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -95,8 +141,8 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="font-medium">Normal</span>
+                <div className={`w-3 h-3 rounded-full ${getStatusColor(campusSafetyStatus)}`}></div>
+                <span className="font-medium capitalize">{campusSafetyStatus}</span>
               </div>
               <Button 
                 variant="outline" 
@@ -223,6 +269,10 @@ const AdminDashboard = () => {
                           size="sm" 
                           className={alert.status === 'active' ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-300'}
                           disabled={alert.status !== 'active'}
+                          onClick={() => {
+                            // In a real app, this would open Google Maps with the location
+                            window.open(`https://www.google.com/maps?q=${alert.location.latitude},${alert.location.longitude}`, '_blank');
+                          }}
                         >
                           View on Map
                         </Button>
@@ -231,6 +281,24 @@ const AdminDashboard = () => {
                           variant="outline" 
                           className="ml-2"
                           disabled={alert.status !== 'active'}
+                          onClick={() => {
+                            // In a real app, this would update the alert status
+                            alert.status = 'resolved';
+                            
+                            // Update in localStorage
+                            try {
+                              const storedAlerts = JSON.parse(localStorage.getItem('sosAlerts') || '[]');
+                              const updatedAlerts = storedAlerts.map((a: SOSAlert) => 
+                                a.id === alert.id ? { ...a, status: 'resolved' as const } : a
+                              );
+                              localStorage.setItem('sosAlerts', JSON.stringify(updatedAlerts));
+                              
+                              // Update active alerts
+                              setActiveAlerts(activeAlerts.filter(a => a.id !== alert.id));
+                            } catch (error) {
+                              console.error("Error updating SOS alerts:", error);
+                            }
+                          }}
                         >
                           Mark as Resolved
                         </Button>

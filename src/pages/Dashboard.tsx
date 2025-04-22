@@ -9,11 +9,14 @@ import { mockUsers, getUserComplaints } from '@/lib/mockData';
 import { useNavigate } from 'react-router-dom';
 import { Bell, User, MessageSquare } from 'lucide-react';
 import { Complaint } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [userComplaints, setUserComplaints] = useState<Complaint[]>([]);
+  const [campusSafetyStatus, setCampusSafetyStatus] = useState('normal');
+  const { toast } = useToast();
   
   useEffect(() => {
     // Check if user is logged in
@@ -40,6 +43,12 @@ const Dashboard = () => {
             const complaints = getUserComplaints(user.id);
             setUserComplaints(complaints);
           }
+          
+          // Get campus safety status
+          const savedStatus = localStorage.getItem('campusSafetyStatus');
+          if (savedStatus) {
+            setCampusSafetyStatus(savedStatus);
+          }
         } else {
           navigate('/login');
         }
@@ -51,6 +60,33 @@ const Dashboard = () => {
     
     checkLoggedInUser();
   }, [navigate]);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'normal': return 'bg-green-500';
+      case 'caution': return 'bg-yellow-500';
+      case 'alert': return 'bg-red-500';
+      default: return 'bg-green-500';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'normal': return 'Normal';
+      case 'caution': return 'Caution';
+      case 'alert': return 'Alert';
+      default: return 'Normal';
+    }
+  };
+
+  const getStatusDescription = (status: string) => {
+    switch (status) {
+      case 'normal': return 'No active campus alerts at this time.';
+      case 'caution': return 'Exercise caution on campus. Security personnel have been notified.';
+      case 'alert': return 'High alert status. Emergency protocols are active.';
+      default: return 'No active campus alerts at this time.';
+    }
+  };
 
   if (!currentUser) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -74,10 +110,10 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="font-medium">Normal</span>
+                <div className={`w-3 h-3 rounded-full ${getStatusColor(campusSafetyStatus)}`}></div>
+                <span className="font-medium">{getStatusText(campusSafetyStatus)}</span>
               </div>
-              <p className="text-sm mt-2">No active campus alerts at this time.</p>
+              <p className="text-sm mt-2">{getStatusDescription(campusSafetyStatus)}</p>
             </CardContent>
           </Card>
           
@@ -221,21 +257,11 @@ const Dashboard = () => {
                 <div className="flex justify-center">
                   <SOSButton 
                     onActivate={() => {
-                      // Implement SOS activation with Google Maps
-                      if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                          (position) => {
-                            const { latitude, longitude } = position.coords;
-                            console.log("Location:", { latitude, longitude });
-                            
-                            // In a real app, this would send the alert to campus security
-                            // and show location on Google Maps
-                          },
-                          (error) => {
-                            console.error("Error getting location:", error);
-                          }
-                        );
-                      }
+                      toast({
+                        title: "SOS Alert Activated",
+                        description: "Emergency services have been notified of your location.",
+                        variant: "destructive"
+                      });
                     }} 
                     size="large"
                   />

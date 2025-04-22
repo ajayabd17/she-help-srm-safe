@@ -13,6 +13,12 @@ import SubmitComplaint from "./pages/SubmitComplaint";
 import MyComplaints from "./pages/MyComplaints";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import Resources from "./pages/Resources";
+import CampusMap from "./pages/CampusMap";
+import AdminComplaints from "./pages/AdminComplaints";
+import AdminAnonymousComplaints from "./pages/AdminAnonymousComplaints";
+import AdminAlerts from "./pages/AdminAlerts";
+import SafetyStatus from "./pages/SafetyStatus";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +37,12 @@ const App = () => (
           <Route path="/submit-complaint" element={<SubmitComplaint />} />
           <Route path="/my-complaints" element={<MyComplaints />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/resources" element={<Resources />} />
+          <Route path="/campus-map" element={<CampusMap />} />
+          <Route path="/admin/complaints" element={<AdminComplaints />} />
+          <Route path="/admin/anonymous-complaints" element={<AdminAnonymousComplaints />} />
+          <Route path="/admin/alerts" element={<AdminAlerts />} />
+          <Route path="/admin/safety-status" element={<SafetyStatus />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

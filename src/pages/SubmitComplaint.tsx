@@ -1,11 +1,48 @@
 
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardHeader } from '@/components/layout/dashboard-header';
 import { ComplaintForm } from '@/components/complaint/complaint-form';
 import { mockUsers } from '@/lib/mockData';
+import { User } from '@/types';
 
 const SubmitComplaint = () => {
-  // In a real app, this would come from an auth context
-  const currentUser = mockUsers[0]; // Default to first user (student)
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user is logged in
+    const checkLoggedInUser = () => {
+      try {
+        const userEmail = localStorage.getItem('currentUserEmail');
+        if (!userEmail) {
+          navigate('/login');
+          return;
+        }
+        
+        const user = mockUsers.find(u => u.email === userEmail);
+        if (user) {
+          setCurrentUser(user);
+          
+          // If profile is not complete and user is a student, redirect to profile page
+          if (user.role === 'student' && !user.isProfileComplete) {
+            navigate('/profile');
+          }
+        } else {
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Error checking logged in user:', error);
+        navigate('/login');
+      }
+    };
+    
+    checkLoggedInUser();
+  }, [navigate]);
+
+  if (!currentUser) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
