@@ -22,7 +22,12 @@ import { mockLogin } from '@/lib/mockData';
 const formSchema = z.object({
   email: z.string()
     .email('Invalid email address')
-    .endsWith('@srmuniversity.edu.in', 'Must be an SRM University email'),
+    .refine(
+      (email) => 
+        email.endsWith('@srmist.edu.in') || 
+        email.endsWith('@srmuniversity.edu.in'), 
+      'Must be an SRM University email (srmist.edu.in or srmuniversity.edu.in)'
+    ),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
 });
